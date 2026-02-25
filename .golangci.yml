@@ -1,0 +1,15 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - loglinter
+
+  settings:
+    custom:
+      loglinter:
+        type: module
+        description: "Log message rules"
+        settings: {}
