@@ -11,21 +11,23 @@ func init() {
 }
 
 func New(conf any) (register.LinterPlugin, error) {
-	return &plugin{}, nil
+	cfg, err := parseConfig(conf)
+	if err != nil {
+		return nil, err
+	}
+	return &plugin{cfg: cfg}, nil
 }
 
-type plugin struct{}
-
-var _ register.LinterPlugin = (*plugin)(nil)
-
-func (*plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
-	return []*analysis.Analyzer{
-		analyzer.LogLinter,
-	}, nil
+type plugin struct {
+	cfg analyzer.Config
 }
 
-func (*plugin) GetLoadMode() string {
-	// Если ты используешь TypesInfo (а ты используешь для определения slog/zap),
-	// нужен LoadModeTypesInfo.
-	return register.LoadModeTypesInfo
+func (p *plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
+	a, err := analyzer.NewAnalyzer(p.cfg)
+	if err != nil {
+		return nil, err
+	}
+	return []*analysis.Analyzer{a}, nil
 }
+
+func (*plugin) GetLoadMode() string { return register.LoadModeTypesInfo }

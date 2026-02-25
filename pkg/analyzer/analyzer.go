@@ -2,9 +2,6 @@ package analyzer
 
 import (
 	"go/ast"
-	"go/token"
-	"strconv"
-
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -15,14 +12,24 @@ const (
 	Doc  = "Checks log messages against predefined rules"
 )
 
-var LogLinter = &analysis.Analyzer{
-	Name:     Name,
-	Doc:      Doc,
-	Requires: []*analysis.Analyzer{inspect.Analyzer},
-	Run:      run,
+func NewAnalyzer(cfg Config) (*analysis.Analyzer, error) {
+	cc, err := compileConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	a := &analysis.Analyzer{
+		Name:     Name,
+		Doc:      Doc,
+		Requires: []*analysis.Analyzer{inspect.Analyzer},
+	}
+	a.Run = func(pass *analysis.Pass) (any, error) {
+		return runWithConfig(pass, cc)
+	}
+	return a, nil
 }
 
-func run(pass *analysis.Pass) (any, error) {
+func runWithConfig(pass *analysis.Pass, cc *compiledConfig) (any, error) {
 	ins := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 
 	ins.Preorder([]ast.Node{(*ast.CallExpr)(nil)}, func(n ast.Node) {
@@ -33,19 +40,27 @@ func run(pass *analysis.Pass) (any, error) {
 			return
 		}
 
-		basicLit, ok := call.Args[msgArgIdx].(*ast.BasicLit)
-		if !ok || basicLit.Kind != token.STRING {
+		expr := call.Args[msgArgIdx]
+
+		if msg, pos, ok := evalConstString(pass, expr); ok {
+			for _, v := range CheckMessageAllWith(cc, msg) {
+				pass.Reportf(pos, "%s", string(v))
+			}
 			return
 		}
 
-		msg, err := strconv.Unquote(basicLit.Value)
-		if err != nil {
-			return
+		parts := extractStringParts(pass, expr)
+
+		if parts.HasDynamic && cc != nil && cc.raw.ForbidSensitive && len(cc.sensSet) > 0 {
+			if containsSensitivePrefix(parts.ConstPrefix, cc.sensSet) {
+				pass.Reportf(parts.Pos, "%s", string(VSensitive))
+			}
 		}
 
-		violations := CheckMessageAll(msg)
-		for _, v := range violations {
-			pass.Reportf(basicLit.Pos(), "%s", string(v))
+		if parts.ConstPrefix != "" {
+			for _, v := range CheckMessageAllWith(cc, parts.ConstPrefix) {
+				pass.Reportf(parts.Pos, "%s", string(v))
+			}
 		}
 	})
 

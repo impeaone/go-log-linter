@@ -27,6 +27,10 @@ func TestCheckMessageAll_Valid(t *testing.T) {
 }
 
 func TestCheckMessageAll_Invalid(t *testing.T) {
+	if err := SetConfig(DefaultConfig()); err != nil {
+		t.Fatalf("SetConfig: %v", err)
+	}
+
 	tests := []struct {
 		msg  string
 		want []Violation
@@ -34,8 +38,8 @@ func TestCheckMessageAll_Invalid(t *testing.T) {
 		{"Starting server", []Violation{VLowercase}},
 		{"запуск сервера", []Violation{VEnglish, VSpecial}},
 		{"server started!🚀", []Violation{VEnglish, VSpecial}},
-		{"api_key=123", []Violation{VSpecial, VSensitive}},
 		{"user password: secret123", []Violation{VSensitive}},
+		{"api_key=" + "123", []Violation{VSensitive, VSpecial}},
 	}
 
 	for _, tt := range tests {

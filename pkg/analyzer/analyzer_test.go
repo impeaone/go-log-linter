@@ -7,5 +7,6 @@ import (
 )
 
 func TestAnalyzer(t *testing.T) {
-	analysistest.Run(t, analysistest.TestData(), LogLinter, "./...")
+	linter, _ := NewAnalyzer(DefaultConfig())
+	analysistest.Run(t, analysistest.TestData(), linter, "./...")
 }

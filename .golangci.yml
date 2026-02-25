@@ -1,9 +1,7 @@
 version: "2"
 
-run:
-  timeout: 5m
-
 linters:
+  default: none
   enable:
     - loglinter
 
@@ -12,4 +10,18 @@ linters:
       loglinter:
         type: module
         description: "Log message rules"
-        settings: {}
+        settings:
+          requireLowercaseStart: true
+          englishMode: "ascii"
+          forbidSpecialChars: true
+          allowedCharsRegex: "^[a-zA-Z0-9 ,.:?'_-]+$"
+          forbidSensitive: true
+          sensitiveKeywords:
+            - password
+            - passwd
+            - secret
+            - apikey
+            - token
+            - api_key
+            - credential
+            - key

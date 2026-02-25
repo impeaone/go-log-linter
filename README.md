@@ -68,7 +68,21 @@ linters:
       loglinter:
         type: module
         description: "Log message rules"
-        settings: {}
+        settings:
+          requireLowercaseStart: true
+          englishMode: "ascii"
+          forbidSpecialChars: true
+          allowedCharsRegex: "^[a-zA-Z0-9 ,.:?'_-]+$"
+          forbidSensitive: true
+          sensitiveKeywords:
+            - password
+            - passwd
+            - secret
+            - apikey
+            - token
+            - api_key
+            - credential
+            - key
 ```
 ### 3) Запустить линтер
 #### Из корня целевого проекта:

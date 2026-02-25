@@ -1,7 +1,6 @@
 package analyzer
 
 import (
-	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -16,43 +15,41 @@ const (
 	VSensitive Violation = "log message must not contain potentially sensitive data"
 )
 
-var (
-	// Разрешаем только этот набор символов.
-	allowed = regexp.MustCompile(`^[a-zA-Z0-9 ,.\-:'?]+$`)
-
-	sensitiveKeywords = []string{
-		"password", "passwd",
-		"secret",
-		"api_key", "apikey",
-		"token", "access_token", "auth_token",
-		"credential",
-	}
-)
-
 func CheckMessageAll(msg string) []Violation {
 	if msg == "" {
 		return nil
 	}
 
+	cc := getCompiledConfig()
+
+	if cc == nil {
+		return nil
+	}
+
+	c := cc.raw
 	var out []Violation
 
-	// lowercase
-	if !startsWithLower(msg) {
+	if c.RequireLowercaseStart && !startsWithLower(msg) {
 		out = append(out, VLowercase)
 	}
 
-	// english (ASCII-only)
-	if hasNonASCII(msg) {
-		out = append(out, VEnglish)
+	switch c.EnglishMode {
+	case EnglishASCII:
+		if hasNonASCII(msg) {
+			out = append(out, VEnglish)
+		}
+	case EnglishLatin:
+		if hasNonASCII(msg) {
+			out = append(out, VEnglish)
+		}
 	}
 
-	// special chars / emojis
-	if !allowed.MatchString(msg) {
+	if c.ForbidSpecialChars && cc.allowedRe != nil && !cc.allowedRe.MatchString(msg) {
 		out = append(out, VSpecial)
 	}
 
-	// sensitive
-	if hasSensitiveKeyword(msg) {
+	// Sensitive
+	if c.ForbidSensitive && len(cc.sensSet) > 0 && hasSensitive(msg, cc.sensSet) {
 		out = append(out, VSensitive)
 	}
 
@@ -73,12 +70,41 @@ func hasNonASCII(s string) bool {
 	return false
 }
 
-func hasSensitiveKeyword(s string) bool {
+func hasSensitive(s string, sensSet map[string]struct{}) bool {
 	lower := strings.ToLower(s)
-	for _, kw := range sensitiveKeywords {
+	for kw := range sensSet {
 		if strings.Contains(lower, kw) {
 			return true
 		}
 	}
 	return false
+}
+
+func CheckMessageAllWith(cc *compiledConfig, msg string) []Violation {
+	if msg == "" || cc == nil {
+		return nil
+	}
+	c := cc.raw
+	var out []Violation
+
+	if c.RequireLowercaseStart && !startsWithLower(msg) {
+		out = append(out, VLowercase)
+	}
+
+	switch c.EnglishMode {
+	case EnglishASCII, EnglishLatin:
+		if hasNonASCII(msg) {
+			out = append(out, VEnglish)
+		}
+	}
+
+	if c.ForbidSpecialChars && cc.allowedRe != nil && !cc.allowedRe.MatchString(msg) {
+		out = append(out, VSpecial)
+	}
+
+	if c.ForbidSensitive && len(cc.sensSet) > 0 && hasSensitive(msg, cc.sensSet) {
+		out = append(out, VSensitive)
+	}
+
+	return out
 }

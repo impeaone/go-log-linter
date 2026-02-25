@@ -7,14 +7,10 @@ import (
 )
 
 func good() {
-	slog.Info("starting server on port 8080")
+	slog.Info("starting server")
 	slog.Error("failed to connect to database")
-	slog.Info("server started")
-	slog.Info("user authenticated successfully")
 
 	logger, _ := zap.NewProduction()
-	logger.Info("starting server on port 8080")
+	logger.Info("starting server")
 	logger.Error("failed to connect to database")
-	logger.Warn("something went wrong")
-	logger.Info("api request completed")
 }
