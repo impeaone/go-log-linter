@@ -33,7 +33,7 @@ func parseConfig(conf any) (analyzer.Config, error) {
 		m[strings.ToLower(k)] = v
 	}
 
-	// bool
+	// Учитывать проверку на нижний регистр
 	if v, exists := m["requirelowercasestart"]; exists {
 		b, ok := v.(bool)
 		if !ok {
@@ -41,6 +41,8 @@ func parseConfig(conf any) (analyzer.Config, error) {
 		}
 		cfg.RequireLowercaseStart = b
 	}
+
+	// Учитывать спец символы
 	if v, exists := m["forbidspecialchars"]; exists {
 		b, ok := v.(bool)
 		if !ok {
@@ -48,6 +50,8 @@ func parseConfig(conf any) (analyzer.Config, error) {
 		}
 		cfg.ForbidSpecialChars = b
 	}
+
+	// Учитывать чувствительные данные
 	if v, exists := m["forbidsensitive"]; exists {
 		b, ok := v.(bool)
 		if !ok {
@@ -56,7 +60,7 @@ func parseConfig(conf any) (analyzer.Config, error) {
 		cfg.ForbidSensitive = b
 	}
 
-	// string
+	// string | только ascii
 	if v, exists := m["englishmode"]; exists {
 		s, ok := v.(string)
 		if !ok {
@@ -64,6 +68,8 @@ func parseConfig(conf any) (analyzer.Config, error) {
 		}
 		cfg.EnglishMode = analyzer.EnglishMode(s)
 	}
+
+	// Учитывать исключение спец. символов
 	if v, exists := m["allowedcharsregex"]; exists {
 		s, ok := v.(string)
 		if !ok {
@@ -71,14 +77,21 @@ func parseConfig(conf any) (analyzer.Config, error) {
 		}
 		cfg.AllowedCharsRegex = s
 	}
-
-	// []string
+	// []string | чувствительные данные (конкретные введенные в yaml слова)
 	if v, exists := m["sensitivekeywords"]; exists {
 		ss, err := toStringSlice(v)
 		if err != nil {
 			return cfg, fmt.Errorf("sensitiveKeywords: %w", err)
 		}
 		cfg.SensitiveKeywords = ss
+	}
+	// []*regexp.Regexp | чувствительные данные по патерну
+	if v, exists := m["sensitivepatterns"]; exists {
+		ss, err := toStringSlice(v)
+		if err != nil {
+			return cfg, fmt.Errorf("sensitivePatterns: %w", err)
+		}
+		cfg.SensitivePatterns = ss
 	}
 
 	return cfg, nil

@@ -17,11 +17,8 @@ linters:
           allowedCharsRegex: "^[a-zA-Z0-9 ,.:?'_-]+$"
           forbidSensitive: true
           sensitiveKeywords:
-            - password
-            - passwd
-            - secret
             - apikey
             - token
-            - api_key
             - credential
-            - key
+          sensitivePatterns:
+            - '(?i)authorization:\s*bearer\s+[a-z0-9\-._~+/]+=*'

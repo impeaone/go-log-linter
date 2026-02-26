@@ -23,13 +23,15 @@ type Config struct {
 
 	ForbidSensitive   bool     `json:"forbidSensitive" yaml:"forbidSensitive"`
 	SensitiveKeywords []string `json:"sensitiveKeywords" yaml:"sensitiveKeywords"`
+	SensitivePatterns []string `json:"sensitivePatterns" yaml:"sensitivePatterns"`
 }
 
 type compiledConfig struct {
 	raw Config
 
 	allowedRe *regexp.Regexp
-	sensSet   map[string]struct{} // lowercase
+	sensSet   map[string]struct{}
+	sensRes   []*regexp.Regexp
 }
 
 func DefaultConfig() Config {
@@ -75,6 +77,7 @@ func compileConfig(c Config) (*compiledConfig, error) {
 	}
 
 	if c.ForbidSensitive {
+		// sensitive вручную прописанные
 		cc.sensSet = make(map[string]struct{}, len(c.SensitiveKeywords))
 		for _, kw := range c.SensitiveKeywords {
 			kw = strings.TrimSpace(strings.ToLower(kw))
@@ -83,11 +86,28 @@ func compileConfig(c Config) (*compiledConfig, error) {
 			}
 			cc.sensSet[kw] = struct{}{}
 		}
+
+		// sensitive по патерну
+		if len(c.SensitivePatterns) > 0 {
+			cc.sensRes = make([]*regexp.Regexp, 0, len(c.SensitivePatterns))
+			for i, p := range c.SensitivePatterns {
+				p = strings.TrimSpace(p)
+				if p == "" {
+					continue
+				}
+				re, err := regexp.Compile(p)
+				if err != nil {
+					return nil, fmt.Errorf("sensitivePatterns[%d]: invalid regexp: %w", i, err)
+				}
+				cc.sensRes = append(cc.sensRes, re)
+			}
+		}
 	}
 
 	return cc, nil
 }
 
+// TODO: пересмотреть вот этот момент
 var (
 	cfgMu sync.RWMutex
 	cfgC  *compiledConfig

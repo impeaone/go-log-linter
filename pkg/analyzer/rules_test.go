@@ -12,6 +12,11 @@ func has(vs []Violation, v Violation) bool {
 }
 
 func TestCheckMessageAll_Valid(t *testing.T) {
+	compConf, err := compileConfig(DefaultConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []string{
 		"starting server on port 8080",
 		"failed to connect to database",
@@ -19,7 +24,7 @@ func TestCheckMessageAll_Valid(t *testing.T) {
 	}
 
 	for _, msg := range tests {
-		vs := CheckMessageAll(msg)
+		vs := CheckMessageAllWith(compConf, msg)
 		if len(vs) != 0 {
 			t.Fatalf("expected no violations for %q, got %v", msg, vs)
 		}
@@ -27,8 +32,9 @@ func TestCheckMessageAll_Valid(t *testing.T) {
 }
 
 func TestCheckMessageAll_Invalid(t *testing.T) {
-	if err := SetConfig(DefaultConfig()); err != nil {
-		t.Fatalf("SetConfig: %v", err)
+	compConf, err := compileConfig(DefaultConfig())
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	tests := []struct {
@@ -43,7 +49,7 @@ func TestCheckMessageAll_Invalid(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		vs := CheckMessageAll(tt.msg)
+		vs := CheckMessageAllWith(compConf, tt.msg)
 		for _, w := range tt.want {
 			if !has(vs, w) {
 				t.Fatalf("msg=%q: expected violation %q, got %v", tt.msg, w, vs)

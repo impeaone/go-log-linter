@@ -18,7 +18,12 @@ func TestCheckMessageAll_UsesSensitiveKeywords(t *testing.T) {
 		t.Fatalf("SetConfig: %v", err)
 	}
 
-	vs := CheckMessageAll("auth_token")
+	compConf, err := compileConfig(c)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	vs := CheckMessageAllWith(compConf, "auth_token")
 
 	found := false
 	for _, v := range vs {
