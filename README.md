@@ -14,11 +14,11 @@
 2. Сообщение должно быть на английском языке  
    В текущей реализации: запрещены non-ASCII символы (например кириллица/эмодзи).
 
-3. Сообщение не должно содержать спецсимволы/эмодзи  
-   Проверяется по whitelist (разрешённый набор символов).
+3. Сообщение не должно содержать спецсимволы/эмодзи.
 
 4. Сообщение не должно содержать потенциально чувствительные данные  
-   Проверка по ключевым словам: `password`, `api_key`, `token`, `secret`, и т.п.
+   Проверка по ключевым словам: `password`, `api_key`, `token`, `secret`.
+   (Также можно добавлять свои паттерны для чувствительных данных)
 
 ## Установка
 
@@ -55,6 +55,7 @@ path\to\custom-gcl.exe
 
 ### 2) Добавить конфиг ```.golangci.yml``` в целевой проект
 #### В корне проекта, который нужно "линтить", создайте ```.golangci.yml```
+#### Пример ```.golangci.yml```
 ```text
 version: "2"
 
@@ -75,14 +76,11 @@ linters:
           allowedCharsRegex: "^[a-zA-Z0-9 ,.:?'_-]+$"
           forbidSensitive: true
           sensitiveKeywords:
-            - password
-            - passwd
-            - secret
             - apikey
             - token
-            - api_key
             - credential
-            - key
+          sensitivePatterns:
+            - '(?i)authorization:\s*bearer\s+[a-z0-9\-._~+/]+=*'
 ```
 ### 3) Запустить линтер
 #### Из корня целевого проекта:
@@ -114,6 +112,6 @@ func demoZap() {
     logger.Info("Starting server")     // заглавная буква
     logger.Error("ошибка подключения") // не английский
     logger.Warn("connection failed!!!")// спецсимволы
-    logger.Debug("user password: 123") // sensitive keyword
+    logger.Debug("user password: 123") // чувствительные данные
 }
 ```
