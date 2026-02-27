@@ -21,9 +21,23 @@ jobs:
       - name: Go fmt check
         run: |
           test -z "$(gofmt -l .)"
-      - name: Go env (debug)
+      - name: Go env (before)
         run: |
-          go env GOPROXY GOSUMDB GONOSUMDB GOPRIVATE GONOPROXY
+          go env GOPROXY GOSUMDB GOPRIVATE GONOPROXY GONOSUMDB
+          env | sort | grep -E '^(GO(PROXY|SUMDB|PRIVATE|NO(PROXY|SUMDB))=)'
+
+      - name: Force module proxy (workaround)
+        run: |
+          echo "GOPROXY=https://proxy.golang.org,direct" >> $GITHUB_ENV
+          echo "GOSUMDB=sum.golang.org" >> $GITHUB_ENV
+
+      - name: Go env (after)
+        run: |
+          go env GOPROXY GOSUMDB
+          go env -w GOPROXY=https://proxy.golang.org,direct
+          go env -w GOSUMDB=sum.golang.org
+          go env GOPROXY GOSUMDB
+
       - name: Unit tests
         run: |
           go test ./...
