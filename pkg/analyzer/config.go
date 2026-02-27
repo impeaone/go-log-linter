@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"sync"
 )
 
 type EnglishMode string
@@ -105,28 +104,4 @@ func compileConfig(c Config) (*compiledConfig, error) {
 	}
 
 	return cc, nil
-}
-
-// TODO: пересмотреть вот этот момент
-var (
-	cfgMu sync.RWMutex
-	cfgC  *compiledConfig
-)
-
-func SetConfig(c Config) error {
-	cc, err := compileConfig(c)
-	if err != nil {
-		return err
-	}
-
-	cfgMu.Lock()
-	cfgC = cc
-	cfgMu.Unlock()
-	return nil
-}
-
-func getCompiledConfig() *compiledConfig {
-	cfgMu.RLock()
-	defer cfgMu.RUnlock()
-	return cfgC
 }

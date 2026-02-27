@@ -35,6 +35,7 @@ func runWithConfig(pass *analysis.Pass, cc *compiledConfig) (any, error) {
 	ins.Preorder([]ast.Node{(*ast.CallExpr)(nil)}, func(n ast.Node) {
 		call := n.(*ast.CallExpr)
 
+		// Проверяем, является ли это вызов логгера
 		msgArgIdx, ok := isSupportedLoggerCall(pass, call)
 		if !ok || msgArgIdx < 0 || msgArgIdx >= len(call.Args) {
 			return
