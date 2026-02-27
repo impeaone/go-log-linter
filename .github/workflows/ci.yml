@@ -14,6 +14,9 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      GOPROXY: https://proxy.golang.org,direct
+      GOSUMDB: sum.golang.org
     steps:
       - uses: actions/checkout@v4
 
@@ -21,20 +24,24 @@ jobs:
         with:
           go-version: "1.25.x"
           cache: true
+          env:
+          GOPROXY: https://proxy.golang.org,direct
+          GOSUMDB: sum.golang.org
+
+      - name: Prepare testdata modules FIRST
+        run: |
+          cd pkg/analyzer/testdata || exit 1
+          go mod tidy
+          cd ../..
 
       - name: Go fmt check
         run: test -z "$(gofmt -l .)"
-
+  
       - name: Unit tests
         env:
           GOPROXY: https://proxy.golang.org,direct
           GOSUMDB: sum.golang.org
-          GONOPROXY: ""
-          GONOSUMDB: ""
-          GOPRIVATE: ""
         run: |
-          go clean -modcache
-          go mod download
           go test ./...
 
   build-custom-gcl:
