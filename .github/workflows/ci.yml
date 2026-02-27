@@ -52,7 +52,7 @@ jobs:
 
       - name: Build custom-gcl
         run: |
-          ./bin/golangci-lint custom -v -c .custom-gcl.yml
+          ./bin/golangci-lint custom -v
           ls -la custom-gcl*
 
       - name: Upload artifact
