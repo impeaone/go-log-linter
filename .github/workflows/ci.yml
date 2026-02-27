@@ -3,6 +3,13 @@ name: ci
 on:
   push:
   pull_request:
+  
+env:
+  GOPROXY: https://proxy.golang.org,direct
+  GOSUMDB: sum.golang.org
+  GONOPROXY: ""
+  GONOSUMDB: ""
+  GOPRIVATE: ""
 
 jobs:
   test:
