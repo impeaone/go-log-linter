@@ -3,7 +3,7 @@ name: ci
 on:
   push:
   pull_request:
-  
+
 env:
   GOPROXY: https://proxy.golang.org,direct
   GOSUMDB: sum.golang.org
@@ -14,9 +14,6 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GOPROXY: https://proxy.golang.org,direct
-      GOSUMDB: sum.golang.org
     steps:
       - uses: actions/checkout@v4
 
@@ -24,25 +21,18 @@ jobs:
         with:
           go-version: "1.25.x"
           cache: true
-          env:
-          GOPROXY: https://proxy.golang.org,direct
-          GOSUMDB: sum.golang.org
 
-      - name: Prepare testdata modules FIRST
+      - name: Prepare testdata
         run: |
-          cd pkg/analyzer/testdata || exit 1
+          cd pkg/analyzer/testdata
           go mod tidy
           cd ../..
 
       - name: Go fmt check
         run: test -z "$(gofmt -l .)"
-  
+
       - name: Unit tests
-        env:
-          GOPROXY: https://proxy.golang.org,direct
-          GOSUMDB: sum.golang.org
-        run: |
-          go test ./...
+        run: go test ./...
 
   build-custom-gcl:
     runs-on: ubuntu-latest
@@ -57,14 +47,13 @@ jobs:
 
       - name: Install golangci-lint
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-             | sh -s -- -b ./bin v2.10.1
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin v2.10.1
           ./bin/golangci-lint --version
 
-      - name: Build custom-gcl (with loglinter)
+      - name: Build custom-gcl
         run: |
           ./bin/golangci-lint custom -v -c .custom-gcl.yml
-          ls -la
+          ls -la custom-gcl*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
